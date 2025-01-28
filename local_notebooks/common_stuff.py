@@ -75,7 +75,7 @@ def prepare_run(model_path, load_lora=None, train=False, gpu=None, **kwargs):
 
     return model, formatter
 
-def prepare_dataset(formatter, train, gpu=None):
+def prepare_dataset(formatter, train, gpu=None, augment=False):
     ds = arc_test_set
     if multi_gpu_train and gpu is not None:
         if multi_gpu_random_split:
@@ -87,24 +87,31 @@ def prepare_dataset(formatter, train, gpu=None):
             ds = ds.change_keys((np.array(ds.keys)[np.array(assignment)==gpu]).tolist())
     if train:
         ds = ds.remove_replies()
-        ds = ds.augment(tp=True, rot=True, perm=perm_aug, n=(2 if arc_test_set.is_fake else train_epochs), shfl_ex=True, shfl_keys=True)
+        if augment:
+            ds = ds.augment(tp=True, rot=True, perm=perm_aug, n=(2 if arc_test_set.is_fake else train_epochs), shfl_ex=True, shfl_keys=True)
+        else:
+            print("Note we are skipping augmentation")
         ds = ds.cut_to_len(formatter=formatter, name='text', max_len=max_seq_length_train, max_new_tokens=0)
         if arc_test_set.is_fake: ds = ds.sorted_by_len(formatter=formatter, name='text', reverse=True)
     else:
         ds = ds.sorted_by_len(formatter=formatter, name='input', max_of_transposed=True)
         ds = ds.split_multi_replies()
-        ds = ds.augment(tp=True, rot=True, n=2, seed=42, perm=perm_aug, shfl_ex=True).interleave(ds.length())
+        if augment:
+            ds = ds.augment(tp=True, rot=True, n=2, seed=42, perm=perm_aug, shfl_ex=True).interleave(ds.length())
+        else:
+            print("Note we are skipping augmentation")
         ds = ds.cut_to_len(formatter=formatter, name='input', max_len=max_seq_length_infer)
         if arc_test_set.is_fake: ds.keys = ds.keys[:128] #ds.keys[::-1][::5][::-1]
     return ds
 
-def start_training(gpu):
+def start_training(gpu, augment=False):
     try:
+        print(f"{'='*20}\n\nWe are running: {arc_test_set.is_fake}")
         storage_path = f'{model_temp_storage}_gpu{gpu}'
         if (gpu==0 or multi_gpu_train) and not os.path.exists(storage_path):
             with RemapCudaOOM():
                 model, formatter = prepare_run(base_model, train=True, gpu=gpu)
-                dataset = prepare_dataset(formatter, train=True, gpu=gpu if multi_gpu_train else None)
+                dataset = prepare_dataset(formatter, train=True, gpu=gpu if multi_gpu_train else None, augment=augment)
                 model, trainer_stats = training_run(
                     model, formatter, dataset, store=storage_path,
                     max_seq_length=max_seq_length_train,
@@ -130,12 +137,12 @@ def start_training(gpu):
                 mem_info()
     finally: os.makedirs(f'{storage_path}_done', exist_ok=True)
 
-def start_inference(gpu):
+def start_inference(gpu, augment=False):
     storage_path = f'{model_temp_storage}_gpu{gpu if multi_gpu_train else 0}'
     while not os.path.exists(f'{storage_path}_done'): time.sleep(15)
     with RemapCudaOOM():
         model, formatter = prepare_run(storage_path, gpu=gpu)
-        dataset = prepare_dataset(formatter, train=False, gpu=gpu)
+        dataset = prepare_dataset(formatter, train=False, gpu=gpu, augment=augment)
         retrainer = None if not prime_on_single_task else Retrainer(
             n=32,
             aug_opts=dict(perm=perm_aug, shfl_ex=True),
