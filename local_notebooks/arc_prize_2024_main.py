@@ -1,5 +1,19 @@
 import os
-from common_stuff import *
+import json
+from common_stuff import (
+    RemapCudaOOM, 
+    MyFormatter, 
+    Decoder, 
+    use_aug_score, 
+    arc_test_set, 
+    score_temp_storage, 
+    aug_score_params, 
+    submission_select_algo,
+    selection_algorithms,
+    start_training,
+    start_inference,
+    infer_temp_storage,
+)
 
 NUM_GPUS=1
 os.environ["WANDB_DISABLED"] = "true"
@@ -28,11 +42,16 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--augment_train", action="store_true", help="Whether to augment during training")
-    parser.add_argument("--augment_evaluate", action="store_true", help="Whether to augment during training")
-    parser.add_argument("--submission_filename", action="store_true", help="Whether to augment during training")
+    parser.add_argument("--augment_evaluate", action="store_true", help="Whether to augment during inferece")
+    parser.add_argument("--submission_filename", type=str, help="Submission Filename")
+
+    args = parser.parse_args()
     # TODO:
+    infer_params = dict(min_prob=0.17, store=infer_temp_storage, use_turbo=True)
+    # infer_params = dict(store=infer_temp_storage, use_turbo=True)
 
-    start_training(gpu=0, augment=False)
-    start_inference(gpu=0, augment=False)
 
-    produce_answers()
+    start_training(gpu=0, augment=args.augment_train)
+    start_inference(gpu=0, augment=args.augment_evaluate, infer_params=infer_params)
+
+    produce_answers(args.submission_filename)

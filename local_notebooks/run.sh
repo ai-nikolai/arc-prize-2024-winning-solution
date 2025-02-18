@@ -1,0 +1,1 @@
+python3 arc_prize_2024_main.py --submission_file submissionv2.json

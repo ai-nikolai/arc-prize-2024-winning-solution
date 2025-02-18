@@ -527,6 +527,9 @@ def inference_step(tokenized, model, remove_token_type_ids=True, num_beams=1, fo
     import torch
     if remove_token_type_ids: tokenized.pop('token_type_ids', None)
     if min_prob is not None:
+        print("="*20)
+        print("Running inference_turbo_dfs")
+
         assert num_beams==1
         gen = inference_turbo_dfs(model, **tokenized.to(model.device), path=current_best, min_prob=min_prob, eos_token_id=formatter.tokenizer.eos_token_id, **kwargs)
         tokens_out = [[g[1] for g in gen]]
@@ -534,6 +537,8 @@ def inference_step(tokenized, model, remove_token_type_ids=True, num_beams=1, fo
     elif is_unsloth_model(model) and num_beams > 1:
         assert False, 'unsloth does not support beam search'
     else:
+        print("="*20)
+        print("Running classical model.generate")
         gen = model.generate(**tokenized.to(model.device), return_dict_in_generate=True, output_logits=True, use_cache=True, **kwargs)
         tokens_out = gen['sequences'][:, torch.newaxis, tokenized['input_ids'].shape[-1]:].cpu().numpy().copy()
         scores_out = torch.stack(gen['logits'], axis=-2)[:, torch.newaxis].float().cpu().numpy().copy()

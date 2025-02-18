@@ -137,7 +137,7 @@ def start_training(gpu, augment=False):
                 mem_info()
     finally: os.makedirs(f'{storage_path}_done', exist_ok=True)
 
-def start_inference(gpu, augment=False):
+def start_inference(gpu, augment=False, infer_params=infer_params):
     storage_path = f'{model_temp_storage}_gpu{gpu if multi_gpu_train else 0}'
     while not os.path.exists(f'{storage_path}_done'): time.sleep(15)
     with RemapCudaOOM():
