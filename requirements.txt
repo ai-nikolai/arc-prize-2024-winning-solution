@@ -1,4 +1,4 @@
-unsloth=="2025.1.6"
-transformers=="4.48.1"
-torch="2.5.1"
+unsloth=="2025.1.6" #2025.2.12
+transformers=="4.48.1" #4.49.0
+torch="2.5.1" #2.6.0
 
