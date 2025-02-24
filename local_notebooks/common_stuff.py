@@ -41,7 +41,7 @@ arc_challenge_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi_evaluati
 arc_solutions_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi_evaluation_solutions.json')
 
 # load datasets
-arc_test_set = ArcDataset.from_file(self.arc_challenge_file)
+arc_test_set = ArcDataset.from_file(arc_challenge_file)
 if arc_test_set.is_fake: arc_test_set.load_replies(arc_solutions_file)
 
 
