@@ -145,7 +145,7 @@ class Trainer:
                             weight_decay=0.01,  # 0.01,
                             lr_scheduler_type='cosine',  # "linear", "cosine",
                             seed=42,
-                            output_dir=,
+                            output_dir=checkpoints_storage,
                             save_strategy="no",
                             report_to='none',
                         ),
