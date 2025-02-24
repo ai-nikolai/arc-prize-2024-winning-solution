@@ -111,6 +111,7 @@ class Trainer:
         self.model_temp_storage = os.path.join(tmp_dir, 'finetuned_model')
         self.infer_temp_storage = os.path.join(tmp_dir, 'inference_outputs')
         self.score_temp_storage = os.path.join(tmp_dir, 'inference_scoring')
+        self.checkpoints_storage = os.path.join(tmp_dir, 'checkpoints')
 
         self.base_model = download_model('da-fr/Mistral-NeMo-Minitron-8B-ARChitects-Full-bnb-4bit', tmp_dir)
 
@@ -119,6 +120,7 @@ class Trainer:
         model_temp_storage=self.model_temp_storage 
         infer_temp_storage=self.infer_temp_storage
         score_temp_storage=self.score_temp_storage
+        checkpoints_storage=self.checkpoints_storage
         try:
             print(f"{'='*20}\n\nWe are running: {arc_test_set.is_fake}")
             storage_path = f'{model_temp_storage}_gpu{gpu}'
@@ -143,7 +145,7 @@ class Trainer:
                             weight_decay=0.01,  # 0.01,
                             lr_scheduler_type='cosine',  # "linear", "cosine",
                             seed=42,
-                            output_dir=os.path.join(tmp_dir, 'checkpoints'),
+                            output_dir=,
                             save_strategy="no",
                             report_to='none',
                         ),
@@ -156,6 +158,7 @@ class Trainer:
         model_temp_storage=self.model_temp_storage 
         infer_temp_storage=self.infer_temp_storage
         score_temp_storage=self.score_temp_storage
+        checkpoints_storage=self.checkpoints_storage
         infer_params.update(dict(store=infer_temp_storage))
         storage_path = f'{model_temp_storage}_gpu{gpu if multi_gpu_train else 0}'
         while not os.path.exists(f'{storage_path}_done'): time.sleep(15)
