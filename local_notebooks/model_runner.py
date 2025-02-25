@@ -438,40 +438,45 @@ class Decoder(object):
         if base_keys is None: base_keys = list(self.decoded_results.keys())
         if store is not None: store = f'{store}_new'  # new format is not backwards compatible, so use new folder
         for bk in (base_keys if quiet else tqdm(base_keys, desc='calculate augmented scores', file=sys.stdout)):
-            res = self.decoded_results.get(bk, {})
-            known_scores = {}
-            for k, v in sorted(res.items()):
-                if 'output' in v:
-                    k_store = None if store is None else os.path.join(store, k)
-                    id = tuple(map(tuple, v['output']))
-                    if not (make_unique and id in known_scores):
-                        try:
-                            assert k_store is not None
-                            with bz2.BZ2File(k_store) as f: known_scores[id] = pickle.load(f)
-                            if isinstance(known_scores[id], list): known_scores[id] = dict(score_multi=known_scores[id])  # for backwards compatibility
-                            k_store = None
-                        except:
-                            temp_dataset = self.dataset.__class__(
-                                keys=[bk],
-                                queries={bk: self.dataset.queries.get(bk)},
-                                replies={bk: [v['output'].tolist()]},
-                            )
-                            temp_decoder = self.__class__(self.formatter, temp_dataset, n_guesses=self.n_guesses, quiet=True)
-                            temp_dataset = temp_dataset.augment(**kwargs, seed=(seed+hash(k)+hash(id)) % 1024**2, quiet=True)
-                            if max_len is not None: temp_dataset = temp_dataset.cut_to_len(formatter=self.formatter, name='input', max_len=max_len, quiet=True)
-                            for x in temp_dataset.as_list(self.formatter): calc_score(**x, formatter=self.formatter, model=model, decoder=temp_decoder)
-                            known_scores[id] = dict(
-                                score_multi=[np.sum(x['score']) for x in temp_decoder.decoded_results[bk].values()],
-                                score_multi_nl=[x['score_val'] for x in temp_decoder.decoded_results[bk].values()],
-                                score_multi_array=np.array([x['score'] for x in temp_decoder.decoded_results[bk].values()]),
-                                score_multi_array_cum=np.array([x['score_cum'] for x in temp_decoder.decoded_results[bk].values()]),
-                                score_multi_array_all=np.array([x['score_all'] for x in temp_decoder.decoded_results[bk].values()]),
-                                score_multi_array_all_cum=np.array([x['score_all_cum'] for x in temp_decoder.decoded_results[bk].values()]),
-                            )
-                            if k_store is not None:
-                                os.makedirs(store, exist_ok=True)
-                                with bz2.BZ2File(k_store, 'w') as f: pickle.dump(known_scores[id], f)
-                    v.update(known_scores[id])
+            try:
+                res = self.decoded_results.get(bk, {})
+                known_scores = {}
+                for k, v in sorted(res.items()):
+                    if 'output' in v:
+                        k_store = None if store is None else os.path.join(store, k)
+                        id = tuple(map(tuple, v['output']))
+                        if not (make_unique and id in known_scores):
+                            try:
+                                assert k_store is not None
+                                with bz2.BZ2File(k_store) as f: known_scores[id] = pickle.load(f)
+                                if isinstance(known_scores[id], list): known_scores[id] = dict(score_multi=known_scores[id])  # for backwards compatibility
+                                k_store = None
+                            except:
+                                temp_dataset = self.dataset.__class__(
+                                    keys=[bk],
+                                    queries={bk: self.dataset.queries.get(bk)},
+                                    replies={bk: [v['output'].tolist()]},
+                                )
+                                temp_decoder = self.__class__(self.formatter, temp_dataset, n_guesses=self.n_guesses, quiet=True)
+                                temp_dataset = temp_dataset.augment(**kwargs, seed=(seed+hash(k)+hash(id)) % 1024**2, quiet=True)
+                                if max_len is not None: temp_dataset = temp_dataset.cut_to_len(formatter=self.formatter, name='input', max_len=max_len, quiet=True)
+                                for x in temp_dataset.as_list(self.formatter): calc_score(**x, formatter=self.formatter, model=model, decoder=temp_decoder)
+                                known_scores[id] = dict(
+                                    score_multi=[np.sum(x['score']) for x in temp_decoder.decoded_results[bk].values()],
+                                    score_multi_nl=[x['score_val'] for x in temp_decoder.decoded_results[bk].values()],
+                                    score_multi_array=np.array([x['score'] for x in temp_decoder.decoded_results[bk].values()]),
+                                    score_multi_array_cum=np.array([x['score_cum'] for x in temp_decoder.decoded_results[bk].values()]),
+                                    score_multi_array_all=np.array([x['score_all'] for x in temp_decoder.decoded_results[bk].values()]),
+                                    score_multi_array_all_cum=np.array([x['score_all_cum'] for x in temp_decoder.decoded_results[bk].values()]),
+                                )
+                                if k_store is not None:
+                                    os.makedirs(store, exist_ok=True)
+                                    with bz2.BZ2File(k_store, 'w') as f: pickle.dump(known_scores[id], f)
+                        v.update(known_scores[id])
+            except Exception as e:
+                print("=========================\nError Occurred during Decoding.")
+                print(e)
+                print("Something happened.")
 
 def turbo_dfs(model, logits, path, eos_token_id, max_new_tokens, max_score, max_score_greedy, temperature, suppress_tokens, torch, score=0.0, pos=0, cache=None):
     logits, next_logits = logits[0], (logits[1:] if len(logits)>1 else None)
@@ -586,25 +591,30 @@ def inference_run_v2(model, formatter, dataset, decoder=None, max_new_tokens=Non
     try:
         with tqdm(base_key_list, file=sys.stdout) as pbar:
             for base_key in pbar:
-                run_keys = needs_rerun.get(base_key)
-                if run_keys:
-                    if retrain is not None:
-                        retrain_dataset = dataset.keep_key_startswith(base_key)
-                        print(f"retraining model for key '{base_key}' (retrain_dataset_size={len(retrain_dataset.keys)})")
-                        retrain(model, retrain_dataset)
-                        if is_unsloth_model(model): FastLanguageModel.for_inference(model)
-                    with torch.no_grad():
-                        for key in run_keys:
-                            input_text = dataset.get(key, formatter)['input']
-                            batch = formatter.tokenizer([input_text], return_tensors='pt')
-                            current_best = decoder.get_current_best(key.split('.')[0]) if use_turbo else None
-                            if current_best is not None:
-                                current_best = dataset.forward_mod(current_best, key)
-                                current_best = formatter.fmt_reply([current_best])
-                                current_best = formatter.tokenizer(input_text+current_best)['input_ids'][batch['input_ids'].shape[-1]:]
-                            batch_out = inference_step(batch, model, formatter=formatter, max_new_tokens=max_new_tokens, current_best=current_best, **kwargs)
-                            outputs = [x[0] for x in batch_out]
-                            result_dict[key] = process_inference_output(key, outputs, formatter, store=store, decoder=decoder, decoder_args=dict(print_func=pbar.write))
+                try:
+                    run_keys = needs_rerun.get(base_key)
+                    if run_keys:
+                        if retrain is not None:
+                            retrain_dataset = dataset.keep_key_startswith(base_key)
+                            print(f"retraining model for key '{base_key}' (retrain_dataset_size={len(retrain_dataset.keys)})")
+                            retrain(model, retrain_dataset)
+                            if is_unsloth_model(model): FastLanguageModel.for_inference(model)
+                        with torch.no_grad():
+                            for key in run_keys:
+                                input_text = dataset.get(key, formatter)['input']
+                                batch = formatter.tokenizer([input_text], return_tensors='pt')
+                                current_best = decoder.get_current_best(key.split('.')[0]) if use_turbo else None
+                                if current_best is not None:
+                                    current_best = dataset.forward_mod(current_best, key)
+                                    current_best = formatter.fmt_reply([current_best])
+                                    current_best = formatter.tokenizer(input_text+current_best)['input_ids'][batch['input_ids'].shape[-1]:]
+                                batch_out = inference_step(batch, model, formatter=formatter, max_new_tokens=max_new_tokens, current_best=current_best, **kwargs)
+                                outputs = [x[0] for x in batch_out]
+                                result_dict[key] = process_inference_output(key, outputs, formatter, store=store, decoder=decoder, decoder_args=dict(print_func=pbar.write))
+                except Exception as e:
+                    print("===================\nGot an error:\n")
+                    print(e)
+                    print(f"Skipping {base_key}")
         print('*** Completed inference run.')
     except KeyboardInterrupt: print('*** Ctrl+C pressed, stopping inference run.')
     return result_dict
