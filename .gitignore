@@ -2,3 +2,6 @@
 __pycache__
 local_notebooks/temp
 unsloth_compiled_cache
+
+original_full*
+full_official*

@@ -477,6 +477,7 @@ class Decoder(object):
                 print("=========================\nError Occurred during Decoding.")
                 print(e)
                 print("Something happened.")
+                raise
 
 def turbo_dfs(model, logits, path, eos_token_id, max_new_tokens, max_score, max_score_greedy, temperature, suppress_tokens, torch, score=0.0, pos=0, cache=None):
     logits, next_logits = logits[0], (logits[1:] if len(logits)>1 else None)

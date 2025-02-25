@@ -8,18 +8,23 @@ import time
 # paths
 base_path, running_on_kaggle = ('/kaggle', True) if os.path.exists('/kaggle') else ('.', False)
 
-NEW_PATH="full_official"
-NEW_PATH="full_official_eval_aug_"
-NEW_PATH="full_official_train_aug_"
-NEW_PATH="full_official_train_aug___eval_aug_"
+# NEW_PATH="full_official"
+# NEW_PATH="full_official_eval_aug_"
+# NEW_PATH="full_official_train_aug_"
+# NEW_PATH="full_official_train_aug___eval_aug_"
 
 
-NEW_PATH="full_official_multi"
-NEW_PATH="full_official_multi_eval_aug_"
-NEW_PATH="full_official_multi_train_aug_"
-NEW_PATH="full_official_multi_train_aug___eval_aug_"
+# NEW_PATH="full_official_multi"
+# NEW_PATH="full_official_multi_eval_aug_"
+# NEW_PATH="full_official_multi_train_aug_"
+# NEW_PATH="full_official_multi_train_aug___eval_aug_"
 
+NEW_PATH="original_full"
+# NEW_PATH="original_full_eval_aug"
+# NEW_PATH="original_full_train_aug"
+# NEW_PATH="original_full_all"
 
+print(f"======\n\nUSING: {NEW_PATH}")
 tmp_dir = os.path.join(base_path, NEW_PATH)
 
 # base_path = os.path.join(base_path, "input")
