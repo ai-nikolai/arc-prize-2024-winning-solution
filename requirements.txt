@@ -1,10 +1,15 @@
-unsloth==2024.9.post4 
+unsloth==2024.10.6
 torch==2.4.1
 accelerate==0.34.1
 
-# pip install unsloth==2024.10.6 torch==2.4.1
+# pip install unsloth==2024.10.6 torch==2.4.1 accelerate==0.34.1
 
 #ORIGINAL REQUIREMENTS:
 # unsloth==2024.9.post4 (this does not work with latest hub https://github.com/unslothai/unsloth/issues/1148#event-14729430943)
 # torch==2.4.1
+
+#We then started using those
+# unsloth=="2025.1.6" #2025.2.12
+# transformers=="4.48.1" #4.49.0
+# torch=="2.5.1" #2.6.0
 
