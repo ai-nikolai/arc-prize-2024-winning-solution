@@ -1,6 +1,18 @@
 # Readme to get going locally
 
-## Installation (tested on 28.01.2025)
+## Installation (fixing 25.02.2025)
+1. `conda create -n my_env python=3.10`
+2. `pip3 install -r requirements.txt`
+
+## Running Code:
+1. `cd local_notebooks`
+2. `python3 arc_prize_2024_main.py --experiment_name my_exp`
+
+
+
+
+---
+## Installation (tested on 28.01.2025) (BROKEN!)
 1. python 3.10
 2. Requirements (preferred in virtualenv)
 ```bash

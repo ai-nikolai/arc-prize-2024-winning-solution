@@ -1,6 +1,9 @@
 unsloth==2024.10.6
 torch==2.4.1
 accelerate==0.34.1
+transformers==4.44.2
+huggingface-hub==0.29.1
+bitsandbytes==0.45.3
 
 # pip install unsloth==2024.10.6 torch==2.4.1 accelerate==0.34.1
 
