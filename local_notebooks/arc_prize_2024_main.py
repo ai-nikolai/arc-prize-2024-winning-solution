@@ -55,8 +55,8 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--augment_train", action="store_true", help="Whether to augment during training")
     parser.add_argument("--augment_evaluate", action="store_true", help="Whether to augment during inferece")
-    parser.add_argument("--turbo_inference", action="store_true", help="Whether to use turbo inference")
-    parser.add_argument("--min_prob", type=float, help="What min prob should be. (e.g. 0.17)")
+    parser.add_argument("--dfs", action="store_true", help="Whether to use turbo inference")
+    parser.add_argument("--min_prob", default=0.17, type=float, help="What min prob should be. (e.g. 0.17)")
 
     # parser.add_argument("--submission_filename", type=str, help="Submission Filename")
     parser.add_argument("--experiment_name", type=str, help="Submission Filename")
@@ -66,9 +66,9 @@ if __name__=="__main__":
     # infer_params = dict(min_prob=0.17, store=infer_temp_storage, use_turbo=True)
     # infer_params = dict(store=infer_temp_storage, use_turbo=True)
 
-    if args.min_prob or args.turbo_inference:
-        turbo_str = "_turbo_"
-        infer_params = dict(min_prob=0.17, use_turbo=True)
+    if args.dfs:
+        turbo_str = "_dfs_"
+        infer_params = dict(min_prob=args.min_prob, use_turbo=True)
     else:
         turbo_str = ""
         infer_params = dict(use_turbo=True)
