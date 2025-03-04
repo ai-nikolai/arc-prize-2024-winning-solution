@@ -23,11 +23,14 @@ from model_tools import InputMaskingDataCollator
 from model_tools import load_unsloth_4bit, keep_single_char_tokens, save_model_and_tokenizer
 from model_tools import load_peft_state, merge_peft_into_base
 
+
+current_file_path = os.path.dirname(os.path.realpath(__file__))
+base_path = os.path.join(current_file_path,"..","data")
 # input paths
 base_model = 'nvidia/Mistral-NeMo-Minitron-8B-Base'  # auto-downloaded from huggingface.co
-arc_data_path = os.path.join('input', 'arc-prize-2024')  # as on kaggle arc prize 2024
-re_arc_path = os.path.join('input', 're_arc')  # https://github.com/michaelhodel/re-arc
-neoneye_path = os.path.join('input', 'arc-dataset-collection')  # https://github.com/neoneye/arc-dataset-collection
+arc_data_path = os.path.join(base_path, 'arc-prize-2024')  # as on kaggle arc prize 2024
+re_arc_path = os.path.join(base_path, 're_arc')  # https://github.com/michaelhodel/re-arc
+neoneye_path = os.path.join(base_path, 'arc-dataset-collection-main')  # https://github.com/neoneye/arc-dataset-collection
 
 # output paths
 save_model_path = os.path.join('pretrained_models', "Mistral-NeMo-Minitron-Full")
