@@ -108,7 +108,7 @@ if __name__ == "__main__":
             # load training data
             print("-"*20)
             print("Loading Data...")
-            arc_eval_set = ArcDataset.load_from_json(os.path.join(arc_data_path, 'arc-agi-fixed_evaluation_challenges-v1.json'))
+            arc_eval_set = ArcDataset.load_from_json(os.path.join(arc_data_path, 'arc-agi-fixed-evaluation_challenges-v1.json'))
             arc_eval_set = arc_eval_set.load_solutions(os.path.join(arc_data_path, 'arc-agi-fixed-evaluation_solutions-v1.json'))
             concept_arc = ArcDataset.load_from_neoneye(os.path.join(neoneye_path, 'dataset', 'ConceptARC'))
             mix_datasets = {
