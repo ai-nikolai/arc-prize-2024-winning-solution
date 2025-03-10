@@ -83,7 +83,7 @@ class ArcDataset(object):
                 solutions[base_key] = reply = []
                 for _ in range(next_size_with_test):
                     if not len(tasks):
-                        raise RuntimeError('Not enough examples - generate more re-arc examples or reduce epochs.')
+                        raise RuntimeError(f'Not enough examples - generate more re-arc examples or reduce epochs. n={n}; epoch={epoch}')
                     challenge[base_key]['train'].append({k: v for k, v in tasks.pop().items()})
                 challenge[base_key]['test'].append(challenge[base_key]['train'].pop())
                 solutions[base_key].append(challenge[base_key]['test'][-1].pop('output'))
