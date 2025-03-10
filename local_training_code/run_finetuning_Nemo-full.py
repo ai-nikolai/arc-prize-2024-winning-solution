@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_name", default="IKCL")
     parser.add_argument("--remove_tokens", action="store_true")
     parser.add_argument("--augmentation_level", default="none")
+    parser.add_argument("--n_repeat", default=128) #how often eval & concept arc will be copied into dataset
 
     args = parser.parse_args()
 
@@ -102,6 +103,7 @@ if __name__ == "__main__":
             loftq_config=None,
         )
 
+        N_REPEAT = args.n_repeat #original = 128
         if action == 'train':
             print("="*40)
             print("TRAIN LOOP")
@@ -112,8 +114,8 @@ if __name__ == "__main__":
             arc_eval_set = arc_eval_set.load_solutions(os.path.join(arc_data_path, 'arc-agi-fixed-evaluation_solutions-v1.json'))
             concept_arc = ArcDataset.load_from_neoneye(os.path.join(neoneye_path, 'dataset', 'ConceptARC'))
             mix_datasets = {
-                'arceval': arc_eval_set.move_test_to_train().repeat(128),
-                'concept': concept_arc.move_test_to_train().repeat(128),
+                'arceval': arc_eval_set.move_test_to_train().repeat(N_REPEAT),
+                'concept': concept_arc.move_test_to_train().repeat(N_REPEAT),
             }
             print("Done.")
 
