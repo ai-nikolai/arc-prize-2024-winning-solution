@@ -159,6 +159,8 @@ if __name__ == "__main__":
             if do_aug:
                 train_dataset_augment = train_dataset.augment(**train_aug_opts)
                 train_dataset_as_list = train_dataset_augment.as_list(len_name='text', **fmt_opts)
+            else:
+                train_dataset_as_list = train_dataset.as_list(len_name='text', **fmt_opts)
             print("Done.")
 
             # run training
