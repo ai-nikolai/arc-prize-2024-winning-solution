@@ -57,6 +57,7 @@ if __name__=="__main__":
     parser.add_argument("--augment_evaluate", action="store_true", help="Whether to augment during inferece")
     parser.add_argument("--dfs", action="store_true", help="Whether to use turbo inference")
     parser.add_argument("--min_prob", default=0.17, type=float, help="What min prob should be. (e.g. 0.17)")
+    parser.add_argument("--model_path", type=str, "the model to use, default is set in file.")
 
     # parser.add_argument("--submission_filename", type=str, help="Submission Filename")
     parser.add_argument("--experiment_name", type=str, help="Submission Filename")
@@ -81,8 +82,10 @@ if __name__=="__main__":
     full_name = name # +  "_"+current_time_string
     submission_filename = name +  f"_submission.json" #+ f"_submission_{current_time_string}.json"
 
-    trainer = Trainer(full_name)
-    trainer.start_training(gpu=0, augment=args.augment_train)
-    trainer.start_inference(gpu=0, augment=args.augment_evaluate, infer_params = infer_params)
+    trainer = Trainer(full_name, model_path=args.model_path)
+    # trainer.start_training(gpu=0, augment=args.augment_train)
+    # trainer.start_inference(gpu=0, augment=args.augment_evaluate, infer_params = infer_params)
+    trainer.start_training(augment=args.augment_train)
+    trainer.start_inference(augment=args.augment_evaluate, infer_params = infer_params)
 
     produce_answers(submission_filename, trainer.score_temp_storage, trainer.infer_temp_storage)

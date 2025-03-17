@@ -41,9 +41,14 @@ current_file_path = os.path.dirname(os.path.realpath(__file__))
 base_path = os.path.join(current_file_path,"..","data")
 
 
-arc_challenge_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi_evaluation_challenges.json')
-arc_solutions_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi_evaluation_solutions.json')
+# arc_challenge_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi_evaluation_challenges.json')
+# arc_solutions_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi_evaluation_solutions.json')
 
+arc_challenge_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi-fixed-test_challenges-v1.json')
+arc_solutions_file = os.path.join(base_path, 'arc-prize-2024', 'arc-agi-fixed-test_solutions-v1.json')
+
+
+print("IMPORTANT: Evaluating on the data: {arc_solutions_file}")
 # load datasets
 arc_test_set = ArcDataset.from_file(arc_challenge_file)
 if arc_test_set.is_fake: arc_test_set.load_replies(arc_solutions_file)
@@ -82,6 +87,7 @@ def prepare_run(model_path, load_lora=None, train=False, gpu=None, **kwargs):
 def prepare_dataset(formatter, train, gpu=None, augment=False):
     ds = arc_test_set
     if multi_gpu_train and gpu is not None:
+        print("Running multi-gpu")
         if multi_gpu_random_split:
             ds = ds.shuffled(seed=123)
             ds = ds.split_at_pos(len(ds.keys)//2)[gpu]
@@ -90,6 +96,7 @@ def prepare_dataset(formatter, train, gpu=None, augment=False):
             assignment = ([0,1,1,0]*ds.length())[:ds.length()][::-1]
             ds = ds.change_keys((np.array(ds.keys)[np.array(assignment)==gpu]).tolist())
     if train:
+        print("Running single-gpu")
         ds = ds.remove_replies()
         if augment:
             ds = ds.augment(tp=True, rot=True, perm=perm_aug, n=(2 if arc_test_set.is_fake else train_epochs), shfl_ex=True, shfl_keys=True)
@@ -110,14 +117,17 @@ def prepare_dataset(formatter, train, gpu=None, augment=False):
 
 class Trainer:
 
-    def __init__(self, main_name="temp"):
+    def __init__(self, main_name="temp", model_path=None):
         tmp_dir = os.path.join(current_file_path, main_name)
         self.model_temp_storage = os.path.join(tmp_dir, 'finetuned_model')
         self.infer_temp_storage = os.path.join(tmp_dir, 'inference_outputs')
         self.score_temp_storage = os.path.join(tmp_dir, 'inference_scoring')
         self.checkpoints_storage = os.path.join(tmp_dir, 'checkpoints')
 
-        self.base_model = download_model('da-fr/Mistral-NeMo-Minitron-8B-ARChitects-Full-bnb-4bit', tmp_dir)
+        if model_path:
+            self.base_model = model_path
+        else:
+            self.base_model = download_model('da-fr/Mistral-NeMo-Minitron-8B-ARChitects-Full-bnb-4bit', tmp_dir)
 
     def start_training(self,gpu, augment=False):
         base_model = self.base_model
