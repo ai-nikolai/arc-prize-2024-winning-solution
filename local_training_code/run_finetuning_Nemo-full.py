@@ -40,8 +40,8 @@ if __name__ == "__main__":
     parser.add_argument("--save_name", default="IKCL")
     parser.add_argument("--remove_tokens", action="store_true")
     parser.add_argument("--augmentation_level", default="none")
-    parser.add_argument("--n_repeat", default=128) #how often eval & concept arc will be copied into dataset
-
+    parser.add_argument("--n_repeat", type=int, default=128) #how often eval & concept arc will be copied into dataset
+    parser.add_argument("--rearc_epochs", type=int, default=141)
     args = parser.parse_args()
 
 
@@ -102,8 +102,11 @@ if __name__ == "__main__":
             use_rslora=True,
             loftq_config=None,
         )
-
-        N_REPEAT = args.n_repeat #original = 128
+        try:
+            N_REPEAT = int(args.n_repeat) #original = 128
+        except:
+            N_REPEAT=10
+        print(f"N-repeat is set to {N_REPEAT} of type {type(N_REPEAT)}")
         if action == 'train':
             print("="*40)
             print("TRAIN LOOP")
@@ -124,7 +127,8 @@ if __name__ == "__main__":
             # original_n = 644 #epochs
             print("-"*20)
             print("Loading ReArc...")
-            epochs = 141
+            epochs = int(args.rearc_epochs) #141
+            print(f"Rearc Epochs set to: {epochs}")
             train_dataset = ArcDataset.load_from_rearc(re_arc_path, n=epochs, sizes=[6], seed=42, mix_datasets=mix_datasets)
             print("Done.")
 
@@ -185,8 +189,8 @@ if __name__ == "__main__":
                     mask_first_n_examples=1,
                 ),
                 args=TrainingArguments(
-                    per_device_train_batch_size=4,
-                    gradient_accumulation_steps=2,
+                    per_device_train_batch_size=2, #4
+                    gradient_accumulation_steps=1, #2
                     warmup_ratio=0.25,
                     num_train_epochs=1,
                     learning_rate=1e-4,
