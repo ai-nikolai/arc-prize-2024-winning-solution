@@ -22,7 +22,7 @@ multi_gpu_train = False
 multi_gpu_random_split = False
 
 # NOTE THIS IS FOR MULTIGPU STUFF
-multi_gpu_train = True
+multi_gpu_train = False
 multi_gpu_random_split = True
 
 max_seq_length_infer = 8192
@@ -129,7 +129,7 @@ class Trainer:
         else:
             self.base_model = download_model('da-fr/Mistral-NeMo-Minitron-8B-ARChitects-Full-bnb-4bit', tmp_dir)
 
-    def start_training(self,gpu, augment=False):
+    def start_training(self, gpu=0, augment=False):
         base_model = self.base_model
         model_temp_storage=self.model_temp_storage 
         infer_temp_storage=self.infer_temp_storage
@@ -167,7 +167,7 @@ class Trainer:
                     mem_info()
         finally: os.makedirs(f'{storage_path}_done', exist_ok=True)
 
-    def start_inference(self, gpu, augment=False, infer_params=None):
+    def start_inference(self, gpu=0, augment=False, infer_params=None):
         base_model = self.base_model
         model_temp_storage=self.model_temp_storage 
         infer_temp_storage=self.infer_temp_storage
@@ -178,7 +178,7 @@ class Trainer:
         while not os.path.exists(f'{storage_path}_done'): time.sleep(15)
         with RemapCudaOOM():
             model, formatter = prepare_run(storage_path, gpu=gpu)
-            dataset = prepare_dataset(formatter, train=False, gpu=gpu, augment=augment)
+            dataset = prepare_dataset(formatter, train=False, gpu=gpu if multi_gpu_train else None, augment=augment)
             retrainer = None if not prime_on_single_task else Retrainer(
                 n=32,
                 aug_opts=dict(perm=perm_aug, shfl_ex=True),

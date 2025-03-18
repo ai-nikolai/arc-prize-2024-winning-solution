@@ -57,7 +57,7 @@ if __name__=="__main__":
     parser.add_argument("--augment_evaluate", action="store_true", help="Whether to augment during inferece")
     parser.add_argument("--dfs", action="store_true", help="Whether to use turbo inference")
     parser.add_argument("--min_prob", default=0.17, type=float, help="What min prob should be. (e.g. 0.17)")
-    parser.add_argument("--model_path", type=str, "the model to use, default is set in file.")
+    parser.add_argument("--model_path", type=str, help="the model to use, default is set in file.")
 
     # parser.add_argument("--submission_filename", type=str, help="Submission Filename")
     parser.add_argument("--experiment_name", type=str, help="Submission Filename")
