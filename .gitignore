@@ -9,3 +9,5 @@ local_notebooks/results_v2*
 local_notebooks/working_v2*
 
 pretrained_models
+local_notebooks/model_*
+!local_notebooks/model_runner.py
