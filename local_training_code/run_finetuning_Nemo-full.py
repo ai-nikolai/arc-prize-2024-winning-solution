@@ -39,7 +39,14 @@ if __name__ == "__main__":
     parser.add_argument("--model", default='nvidia/Mistral-NeMo-Minitron-8B-Base')
     parser.add_argument("--save_name", default="IKCL")
     parser.add_argument("--remove_tokens", action="store_true")
-    parser.add_argument("--augmentation_level", default="none")
+    # parser.add_argument("--augmentation_level", default="none")
+    parser.add_argument("--augmentation_tp", action="store_true")
+    parser.add_argument("--augmentation_rt", action="store_true")
+    parser.add_argument("--augmentation_perm", action="store_true")
+    parser.add_argument("--augmentation_shfl", action="store_true")
+    parser.add_argument("--batch", default=2, type=int) #args.batch
+    parser.add_argument("--accumulation", default=1, type=int)#args.accumulation
+
     parser.add_argument("--n_repeat", type=int, default=128) #how often eval & concept arc will be copied into dataset
     parser.add_argument("--rearc_epochs", type=int, default=141)
     args = parser.parse_args()
@@ -55,9 +62,17 @@ if __name__ == "__main__":
     neoneye_path = os.path.join(base_path, 'arc-dataset-collection-main')  # https://github.com/neoneye/arc-dataset-collection
 
     # output paths
+    # ##########################################
+    # NAME
     rm_tokens_str = "_rm-token" if args.remove_tokens else ""
-    aug_str = f"_aug-{args.augmentation_level}"
-    new_model_name = clean_model_name(args.model+"_"+args.save_name+aug_str+rm_tokens_str)
+    aug_str = f"_aug-"
+    aug_str += f"-tp-{args.augmentation_tp}"
+    aug_str += f"-rt-{args.augmentation_rt}"
+    aug_str += f"-shfl-{args.augmentation_shfl}"
+    aug_str += f"-perm-{args.augmentation_perm}"
+    rearc_epochs_str = f"-e-{args.rearc_epochs}"
+    n_repeat_str = f"-n-{args.n_repeat}"
+    new_model_name = clean_model_name(args.model+"_"+args.save_name+aug_str+rm_tokens_str+n_repeat_str+rearc_epochs_str)
     print("="*20)
     print(f"The model name is:{new_model_name}")
     save_model_path = os.path.join('pretrained_models', new_model_name)
@@ -138,29 +153,40 @@ if __name__ == "__main__":
             do_aug=True
             train_aug_opts = dict(tp=True, rt=True, perm=True, shfl_ex=True, seed=0)
 
-            if args.augmentation_level=="none":
+            any_augmentations = any(args.augmentation_tp, args.augmentation_rt, args.augmentation_perm,args.augmentation_shfl)
+            if any_augmentations:
                 print("Not Augmenting!")
                 do_aug = False
-
-            if args.augmentation_level=="tp":
-                train_aug_opts = dict(tp=True, rt=False, perm=False, shfl_ex=False, seed=0)
+            
+            else:
+                train_aug_opts = dict(
+                    tp=args.augmentation_tp, 
+                    rt=args.augmentation_rt, 
+                    perm=args.augmentation_perm, 
+                    shfl_ex=args.augmentation_shfl, 
+                    seed=0
+                )
                 print(f"Augmentation Options: {train_aug_opts}")
 
-            if args.augmentation_level=="rt":
-                train_aug_opts = dict(tp=False, rt=True, perm=False, shfl_ex=False, seed=0)
-                print(f"Augmentation Options: {train_aug_opts}")
+            # if args.augmentation_level=="tp":
+            #     train_aug_opts = dict(tp=True, rt=False, perm=False, shfl_ex=False, seed=0)
+            #     print(f"Augmentation Options: {train_aug_opts}")
 
-            if args.augmentation_level=="perm":
-                train_aug_opts = dict(tp=False, rt=False, perm=True, shfl_ex=False, seed=0)
-                print(f"Augmentation Options: {train_aug_opts}")
+            # if args.augmentation_level=="rt":
+            #     train_aug_opts = dict(tp=False, rt=True, perm=False, shfl_ex=False, seed=0)
+            #     print(f"Augmentation Options: {train_aug_opts}")
 
-            if args.augmentation_level=="shfl":
-                train_aug_opts = dict(tp=False, rt=False, perm=False, shfl_ex=True, seed=0)
-                print(f"Augmentation Options: {train_aug_opts}")
+            # if args.augmentation_level=="perm":
+            #     train_aug_opts = dict(tp=False, rt=False, perm=True, shfl_ex=False, seed=0)
+            #     print(f"Augmentation Options: {train_aug_opts}")
 
-            if args.augmentation_level=="all":
-                train_aug_opts = dict(tp=True, rt=True, perm=True, shfl_ex=True, seed=0)
-                print(f"Augmentation Options: {train_aug_opts}")
+            # if args.augmentation_level=="shfl":
+            #     train_aug_opts = dict(tp=False, rt=False, perm=False, shfl_ex=True, seed=0)
+            #     print(f"Augmentation Options: {train_aug_opts}")
+
+            # if args.augmentation_level=="all":
+            #     train_aug_opts = dict(tp=True, rt=True, perm=True, shfl_ex=True, seed=0)
+            #     print(f"Augmentation Options: {train_aug_opts}")
 
             if do_aug:
                 train_dataset_augment = train_dataset.augment(**train_aug_opts)
@@ -189,8 +215,8 @@ if __name__ == "__main__":
                     mask_first_n_examples=1,
                 ),
                 args=TrainingArguments(
-                    per_device_train_batch_size=2, #4
-                    gradient_accumulation_steps=1, #2
+                    per_device_train_batch_size=args.batch, #4
+                    gradient_accumulation_steps=args.accumulation, #2 
                     warmup_ratio=0.25,
                     num_train_epochs=1,
                     learning_rate=1e-4,
