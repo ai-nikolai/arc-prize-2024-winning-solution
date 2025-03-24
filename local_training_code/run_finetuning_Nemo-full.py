@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_name", default="IKCL")
     parser.add_argument("--remove_tokens", action="store_true")
     # parser.add_argument("--augmentation_level", default="none")
+    parser.add_argument("--do_augmentation", action="store_true")
     parser.add_argument("--augmentation_tp", action="store_true")
     parser.add_argument("--augmentation_rt", action="store_true")
     parser.add_argument("--augmentation_perm", action="store_true")
@@ -65,14 +66,17 @@ if __name__ == "__main__":
     # ##########################################
     # NAME
     rm_tokens_str = "_rm-token" if args.remove_tokens else ""
-    aug_str = f"_aug-"
-    aug_str += f"-tp-{args.augmentation_tp}"
-    aug_str += f"-rt-{args.augmentation_rt}"
-    aug_str += f"-shfl-{args.augmentation_shfl}"
-    aug_str += f"-perm-{args.augmentation_perm}"
+    aug_str = f"_aug-{args.do_augmentation}"
+    if args.do_augmentation:
+        aug_str += f"-tp-{int(args.augmentation_tp)}"
+        aug_str += f"-rt-{int(args.augmentation_rt)}"
+        aug_str += f"-shfl-{int(args.augmentation_shfl)}"
+        aug_str += f"-perm-{int(args.augmentation_perm)}"
     rearc_epochs_str = f"-e-{args.rearc_epochs}"
     n_repeat_str = f"-n-{args.n_repeat}"
-    new_model_name = clean_model_name(args.model+"_"+args.save_name+aug_str+rm_tokens_str+n_repeat_str+rearc_epochs_str)
+    b_str = f"-b-{args.batch}"
+    a_str = f"-a-{args.accumulation}"
+    new_model_name = clean_model_name(args.model+"_"+args.save_name+aug_str+rm_tokens_str+n_repeat_str+rearc_epochs_str+b_str+a_str)
     print("="*20)
     print(f"The model name is:{new_model_name}")
     save_model_path = os.path.join('pretrained_models', new_model_name)
@@ -142,7 +146,7 @@ if __name__ == "__main__":
             # original_n = 644 #epochs
             print("-"*20)
             print("Loading ReArc...")
-            epochs = int(args.rearc_epochs) #141
+            epochs = int(args.rearc_epochs) #141 #644
             print(f"Rearc Epochs set to: {epochs}")
             train_dataset = ArcDataset.load_from_rearc(re_arc_path, n=epochs, sizes=[6], seed=42, mix_datasets=mix_datasets)
             print("Done.")
@@ -153,8 +157,8 @@ if __name__ == "__main__":
             do_aug=True
             train_aug_opts = dict(tp=True, rt=True, perm=True, shfl_ex=True, seed=0)
 
-            any_augmentations = any(args.augmentation_tp, args.augmentation_rt, args.augmentation_perm,args.augmentation_shfl)
-            if any_augmentations:
+            any_augmentations = any([args.augmentation_tp, args.augmentation_rt, args.augmentation_perm,args.augmentation_shfl])
+            if not args.do_augmentation:
                 print("Not Augmenting!")
                 do_aug = False
             
