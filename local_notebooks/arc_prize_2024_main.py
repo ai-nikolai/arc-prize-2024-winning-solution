@@ -58,6 +58,7 @@ if __name__=="__main__":
     parser.add_argument("--dfs", action="store_true", help="Whether to use turbo inference")
     parser.add_argument("--min_prob", default=0.17, type=float, help="What min prob should be. (e.g. 0.17)")
     parser.add_argument("--model_path", type=str, help="the model to use, default is set in file.")
+    parser.add_argument("--run_ttt", action="store_true", help="Whether to run test time training.")
 
     # parser.add_argument("--submission_filename", type=str, help="Submission Filename")
     parser.add_argument("--experiment_name", type=str, help="Submission Filename")
@@ -74,7 +75,10 @@ if __name__=="__main__":
         turbo_str = ""
         infer_params = dict(use_turbo=True)
     
-    train_aug = "_train_aug_" if args.augment_train else ""
+    if args.run_ttt:
+        train_aug = "_train_aug_" if args.augment_train else ""
+    else:
+        train_aug = "_no_train_"
     eval_aug = "_eval_aug_" if args.augment_evaluate else ""
 
     # current_time_string = datetime.datetime.now().strftime("%d%m%Y_%H%M%S")    
@@ -85,7 +89,10 @@ if __name__=="__main__":
     trainer = Trainer(full_name, model_path=args.model_path)
     # trainer.start_training(gpu=0, augment=args.augment_train)
     # trainer.start_inference(gpu=0, augment=args.augment_evaluate, infer_params = infer_params)
-    trainer.start_training(augment=args.augment_train)
-    trainer.start_inference(augment=args.augment_evaluate, infer_params = infer_params)
+    if args.run_ttt:
+        trainer.start_training(augment=args.augment_train)
+    else:
+        pass
+    trainer.start_inference(augment=args.augment_evaluate, infer_params = infer_params, test_time_training=args.run_ttt)
 
     produce_answers(submission_filename, trainer.score_temp_storage, trainer.infer_temp_storage)
